@@ -34,6 +34,7 @@ class Interface:
         menu_bar.add_cascade(label="File", menu=file_menu)
         file_menu.add_command(label="Open", command=self.__open_file)
         file_menu.add_command(label="Save", command=self.__save_file)
+        file_menu.add_command(label="Save result", command=self.__save_result)
 
         run_menu = tk.Menu(menu_bar, tearoff=0)
         menu_bar.add_cascade(label="Run", menu=run_menu)
@@ -60,6 +61,12 @@ class Interface:
             with open(file_path, "w") as file:
                 file.write(self.__text_editor.get(1.0, tk.END))
 
+    def __save_result(self):
+        file_path = filedialog.asksaveasfilename(defaultextension="txt",
+                                                 filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
+        if file_path:
+            with open(file_path, "w") as file:
+                file.write(self.__output_panel.get(1.0, tk.END))
     def __process(self, strategy: CalculateStrategy):
         content = self.__text_editor.get(1.0, tk.END)
         res = strategy.run(content)
