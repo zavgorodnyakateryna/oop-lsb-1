@@ -1,21 +1,30 @@
 import tkinter as tk
 from tkinter import filedialog
 
+from handlers.strategy import CalculateStrategy
+from logger.logger import Logger
+from handlers.frequence import Frequency
+from handlers.count_sentence import CountSentence
+from handlers.transliteration import Transliteration
+
+
 class Interface:
     title: str = "Text analysis"
     __app: tk.Tk
     __text_editor: tk.Text
     __output_panel: tk.Text
+    __handlers: dict = dict()
 
     def __init__(self) -> None:
         self.__app = tk.Tk()
         self.__initialize_components()
+        self.__logger = Logger()
 
     def __initialize_components(self):
-        self.__text_editor = tk.Text(self.__app, height=10, width=50)
+        self.__text_editor = tk.Text(self.__app, height=10, width=100)
         self.__text_editor.pack(pady=20)
 
-        self.__output_panel = tk.Text(self.__app, height=10, width=50, state=tk.DISABLED)
+        self.__output_panel = tk.Text(self.__app, height=10, width=100, state=tk.DISABLED)
         self.__output_panel.pack(pady=20)
 
         menu_bar = tk.Menu(self.__app)
@@ -28,7 +37,14 @@ class Interface:
 
         run_menu = tk.Menu(menu_bar, tearoff=0)
         menu_bar.add_cascade(label="Run", menu=run_menu)
-        run_menu.add_command(label="Execute Function", command=self.__run_function)
+
+        frequencyStrategy = Frequency()
+        countSentenceStrategy = CountSentence()
+        transliterationStrategy = Transliteration()
+
+        run_menu.add_command(label="відносна частота вживання", command=lambda: self.__process(frequencyStrategy))
+        run_menu.add_command(label="кількість речень", command=lambda: self.__process(countSentenceStrategy))
+        run_menu.add_command(label="транслітерація", command=lambda: self.__process(transliterationStrategy))
 
     def __open_file(self):
         file_path = filedialog.askopenfilename(filetypes=[("Text files", "*.txt"), ("JSON files", "*.json"), ("All files", "*.*")])
@@ -43,6 +59,18 @@ class Interface:
         if file_path:
             with open(file_path, "w") as file:
                 file.write(self.__text_editor.get(1.0, tk.END))
+
+    def __process(self, strategy: CalculateStrategy):
+        content = self.__text_editor.get(1.0, tk.END)
+        res = strategy.run(content)
+        self.__logger.log(f"run strategy: {strategy}")
+        self.__print(res)
+
+    def __print(self, content: str):
+        self.__output_panel.config(state=tk.NORMAL)
+        self.__output_panel.delete(1.0, tk.END)
+        self.__output_panel.insert(tk.END, content)
+        self.__output_panel.config(state=tk.DISABLED)
 
     def __run_function(self):
         content = self.__text_editor.get(1.0, tk.END)
